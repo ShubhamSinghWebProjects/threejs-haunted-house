@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import gsap from 'gsap'
 
-BASE_PATH = '/threejs-haunted-house'
+const BASE_PATH = '/threejs-haunted-house'
 /**
  * Base
  */
