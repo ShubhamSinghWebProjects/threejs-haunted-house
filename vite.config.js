@@ -3,7 +3,7 @@ const isCodeSandbox = 'SANDBOX_URL' in process.env || 'CODESANDBOX_HOST' in proc
 export default {
     root: 'src/',
     publicDir: '../static/',
-    base: './',
+    base: '/threejs-haunted-house/',
     server:
     {
         host: true,
@@ -11,7 +11,7 @@ export default {
     },
     build:
     {
-        outDir: '../dist',
+        outDir: '../docs',
         emptyOutDir: true,
         sourcemap: true
     }

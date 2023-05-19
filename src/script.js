@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
+import gsap from 'gsap'
 
+BASE_PATH = '/threejs-haunted-house'
 /**
  * Base
  */
@@ -15,31 +17,32 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // FOG
-const fog = new THREE.Fog('#262837', 1, 15)
-scene.fog = fog
+scene.fog = new THREE.FogExp2(0x081825, 0.1);  // adding a dense fog for a spooky effect
 
 /**
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
 
-const doorColorTexture = textureLoader.load('/textures/door/color.jpg')
-const doorAlphaTexture = textureLoader.load('/textures/door/alpha.jpg')
-const doorAmbientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg')
-const doorHeightTexture = textureLoader.load('/textures/door/height.jpg')
-const doorNormalTexture = textureLoader.load('/textures/door/normal.jpg')
-const doorMetalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
-const doorRoughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
+const doorColorTexture = textureLoader.load(`${BASE_PATH}/textures/door/color.jpg`)
+const doorAlphaTexture = textureLoader.load(`${BASE_PATH}/textures/door/alpha.jpg`)
+const doorAmbientOcclusionTexture = textureLoader.load(`${BASE_PATH}/textures/door/ambientOcclusion.jpg`)
+const doorHeightTexture = textureLoader.load(`${BASE_PATH}/textures/door/height.jpg`)
+const doorNormalTexture = textureLoader.load(`${BASE_PATH}/textures/door/normal.jpg`)
+const doorMetalnessTexture = textureLoader.load(`${BASE_PATH}/textures/door/metalness.jpg`)
+const doorRoughnessTexture = textureLoader.load(`${BASE_PATH}/textures/door/roughness.jpg`)
 
-const bricksColorTexture = textureLoader.load('/textures/bricks/color.jpg')
-const bricksAmbientOcclusionTexture = textureLoader.load('/textures/bricks/ambientOcclusion.jpg')
-const bricksNormalTexture = textureLoader.load('/textures/bricks/normal.jpg')
-const bricksRoughnessTexture = textureLoader.load('/textures/bricks/roughness.jpg')
+const bricksColorTexture = textureLoader.load(`${BASE_PATH}/textures/bricks/color.jpg`)
+const bricksAmbientOcclusionTexture = textureLoader.load(`${BASE_PATH}/textures/bricks/ambientOcclusion.jpg`)
+const bricksNormalTexture = textureLoader.load(`${BASE_PATH}/textures/bricks/normal.jpg`)
+const bricksRoughnessTexture = textureLoader.load(`${BASE_PATH}/textures/bricks/roughness.jpg`)
 
-const grassColorTexture = textureLoader.load('/textures/grass/color.jpg')
-const grassAmbientOcclusionTexture = textureLoader.load('/textures/grass/ambientOcclusion.jpg')
-const grassNormalTexture = textureLoader.load('/textures/grass/normal.jpg')
-const grassRoughnessTexture = textureLoader.load('/textures/grass/roughness.jpg')
+const grassColorTexture = textureLoader.load(`${BASE_PATH}/textures/grass/color.jpg`)
+const grassAmbientOcclusionTexture = textureLoader.load(`${BASE_PATH}/textures/grass/ambientOcclusion.jpg`)
+const grassNormalTexture = textureLoader.load(`${BASE_PATH}/textures/grass/normal.jpg`)
+const grassRoughnessTexture = textureLoader.load(`${BASE_PATH}/textures/grass/roughness.jpg`)
+
+
 
 grassColorTexture.repeat.set(8, 8)
 grassAmbientOcclusionTexture.repeat.set(8, 8)
@@ -153,33 +156,44 @@ bush4.position.set(- 1, 0.05, 2.6)
 houseGroup.add(bush1, bush2, bush3, bush4)
 
 // Graves
-const graves = new THREE.Group()
-scene.add(graves)
+// Graves
+const graves = new THREE.Group();
+scene.add(graves);
 
-const graveGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.2)
-const graveMaterial = new THREE.MeshStandardMaterial({ color: '#b2b6b1' })
+const graveGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.2);
+const graveMaterial = new THREE.MeshStandardMaterial({
+    color: '#b2b6b1',
+});
 
-for(let i = 0; i < 50; i++)
-{
-    const angle = Math.random() * Math.PI * 2 // Random angle
-    const radius = 3 + Math.random() * 6 // Random radius
-    const x = Math.sin(angle) * radius // Get the x position using cosinus
-    const z = Math.cos(angle) * radius // Get the z position using sinus
+// Create an InstancedMesh with the grave geometry and material, and specify the count
+const gravesInstance = new THREE.InstancedMesh(graveGeometry, graveMaterial, 50);
+gravesInstance.castShadow = true; // All instance will cast shadow
+graves.add(gravesInstance);
 
-    // Create the mesh
-    const grave = new THREE.Mesh(graveGeometry, graveMaterial)
+const matrix = new THREE.Matrix4();  // to specify position and rotation for each instance
 
-    // Position
-    grave.position.set(x, 0.3, z)
+// For rotation around Z axis, we use quaternion
+const quaternion = new THREE.Quaternion();
+const upVector = new THREE.Vector3(0, 0, 1);
 
-    // Rotation
-    grave.rotation.z = (Math.random() - 0.5) * 0.4
+for(let i = 0; i < 50; i++) {
+    const angle = Math.random() * Math.PI * 2; // Random angle
+    const radius = 3 + Math.random() * 6; // Random radius
+    const x = Math.sin(angle) * radius; // Get the x position using cosinus
+    const z = Math.cos(angle) * radius; // Get the z position using sinus
 
-    graves.castShadow = true
+    // Set rotation using quaternion
+    quaternion.setFromAxisAngle(upVector, (Math.random() - 0.5) * 0.4);
 
-    // Add to the graves group
-    graves.add(grave)
+    // Reset matrix, apply rotation and translation
+    matrix.identity().makeRotationFromQuaternion(quaternion).setPosition(x, 0.3, z);
+    
+    // Update the instance's transformation matrix
+    gravesInstance.setMatrixAt(i, matrix);
 }
+
+// gravesInstance.instanceMatrix.needsUpdate = true;
+
 
 // Floor
 const floor = new THREE.Mesh(
@@ -221,15 +235,23 @@ const doorLight = new THREE.PointLight('#ff7d46', 1, 7)
 doorLight.position.set(0, 2.2, 2.7)
 houseGroup.add(doorLight)
 
-// Ghosts
-const ghost1 = new THREE.PointLight('#ff00ff', 2, 3)
+/// Ghosts
+
+// Create 3 ghosts
+
+// const ghost1 = new THREE.PointLight('#ff00ff', 2, 3)
+const ghost1 = createGhost()
 scene.add(ghost1)
 
-const ghost2 = new THREE.PointLight('#00ffff', 2, 3)
+// const ghost2 = new THREE.PointLight('#00ffff', 2, 3)
+const ghost2 = createGhost()
 scene.add(ghost2)
 
-const ghost3 = new THREE.PointLight('#ffff00', 2, 3)
+// const ghost3 = new THREE.PointLight('#ffff00', 2, 3)
+const ghost3 = createGhost()
 scene.add(ghost3)
+
+
 
 /**
  * Sizes
@@ -268,6 +290,25 @@ scene.add(camera)
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
 
+// Pause the animation when user starts interacting
+controls.addEventListener('start', function() {
+    tl.pause();
+});
+
+// Resume the animation when user stops interacting
+controls.addEventListener('end', function() {
+       // Clear the current timeline
+       tl.clear();
+
+       // Generate a new timeline starting from the current camera position
+       params.x1 = camera.position.x;
+       params.y1 = camera.position.y;
+       params.z1 = camera.position.z;
+       generateTimeline();
+   
+       tl.resume();   
+});
+
 /**
  * Renderer
  */
@@ -305,50 +346,181 @@ doorLight.shadow.mapSize.width = 256
 doorLight.shadow.mapSize.height = 256
 doorLight.shadow.camera.far = 7
 
-ghost1.shadow.mapSize.width = 256
-ghost1.shadow.mapSize.height = 256
-ghost1.shadow.camera.far = 7
+// ghost1.shadow.mapSize.width = 256
+// ghost1.shadow.mapSize.height = 256
+// ghost1.shadow.camera.far = 7
 
-ghost2.shadow.mapSize.width = 256
-ghost2.shadow.mapSize.height = 256
-ghost2.shadow.camera.far = 7
+// ghost2.shadow.mapSize.width = 256
+// ghost2.shadow.mapSize.height = 256
+// ghost2.shadow.camera.far = 7
 
-ghost3.shadow.mapSize.width = 256
-ghost3.shadow.mapSize.height = 256
-ghost3.shadow.camera.far = 7
+// ghost3.shadow.mapSize.width = 256
+// ghost3.shadow.mapSize.height = 256
+// ghost3.shadow.camera.far = 7
 
+
+/**
+ * GSAP Animation
+ */
+
+// GSAP animation parameters
+const params = {
+    duration: 4,
+    x1: 5, 
+    z1: -5,
+    y1: 3,
+    x2: -5, 
+    z2: -5,
+    y2: 2,
+    x3: -5, 
+    z3: 5,
+    y3: 3,
+    x4: 5, 
+    z4: 5,
+    y4: 2,
+    x5: 4, 
+    z5: -5,
+    y5: 3,
+};
+
+// Create a GSAP timeline
+const tl = gsap.timeline();
+
+// GUI Controller
+const gsapFolder = gui.addFolder('GSAP Animation');
+gsapFolder.add(params, 'duration').min(1).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'x1').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'y1').min(0).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'z1').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'x2').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'y2').min(0).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'z2').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'x3').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'y3').min(0).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'z3').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'x4').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'y4').min(0).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'z4').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'x5').min(-10).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'y5').min(0).max(10).step(0.1).onChange(generateTimeline);
+gsapFolder.add(params, 'z5').min(-10).max(10).step(0.1).onChange(generateTimeline);
+
+function generateTimeline() {
+    tl.clear(); // clear the previous timeline
+
+    tl.to(camera.position, { 
+        duration: params.duration, delay: 0.5, 
+        x: params.x1, 
+        z: params.z1,
+        y: params.y1, 
+        ease: 'power1.inOut', 
+        onComplete: () => { camera.lookAt(scene.position); } 
+    })
+    .to(camera.position, { 
+        duration: params.duration, delay: 0.5, 
+        x: params.x2, 
+        z: params.z2,
+        y: params.y2,
+        ease: 'power1.inOut',
+        onComplete: () => { camera.lookAt(scene.position); } 
+    })
+    .to(camera.position, {
+        duration: params.duration, delay: 0.5,
+        x: params.x3,
+        z: params.z3,
+        y: params.y3,
+        ease: 'power1.inOut',
+        onComplete: () => { camera.lookAt(scene.position); }
+    })
+    .to(camera.position, {
+        duration: params.duration, delay: 0.5,
+        x: params.x4,
+        z: params.z4,
+        y: params.y4,
+        ease: 'power1.inOut',
+        onComplete: () => { camera.lookAt(scene.position); }
+    })
+    .to(camera.position, {
+        duration: params.duration, delay: 0.5,
+        x: params.x5,
+        z: params.z5,
+        y: params.y5,
+        ease: 'power1.inOut',
+        onComplete: () => { camera.lookAt(scene.position); }
+    });
+    
+    // Add this line at the end of the sequence to make the animation loop
+    tl.repeat(-1);
+}
+
+generateTimeline(); 
 
 /**
  * Animate
  */
-const clock = new THREE.Clock()
 
-function ghostMovement(ghost, elapsedTime)
+function ghostMovement(ghost, elapsedTime, randomXZ = 0, randomY = 0)
 {
     const ghostAngle = elapsedTime * 0.5
-    ghost.position.x = Math.cos(ghostAngle) * 4
-    ghost.position.z = Math.sin(ghostAngle) * 4
-    ghost.position.y = Math.sin(elapsedTime * 3)
+    ghost.position.x = Math.cos(ghostAngle) * 4 + randomXZ
+    ghost.position.z = Math.sin(ghostAngle) * 4 + randomXZ
+    ghost.position.y = Math.sin(elapsedTime * 3) + randomY
 
     ghost.rotation.y = Math.sin(elapsedTime * 4)
 }
 
-const tick = () =>
-{
-    const elapsedTime = clock.getElapsedTime()
 
-    // Update controls
-    controls.update()
+const clock = new THREE.Clock()
 
+const tick = () => {
+  const elapsedTime = clock.getElapsedTime();
+
+ 
     // Update ghosts
     ghostMovement(ghost1, elapsedTime)
-    ghostMovement(ghost2, elapsedTime + 10)
+    ghostMovement(ghost2, elapsedTime + 10, 1, Math.sin(elapsedTime * 2.5))
     ghostMovement(ghost3, elapsedTime + 20)
-    // Render
-    renderer.render(scene, camera)
+    // Render 
+  camera.lookAt(scene.position);
 
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
+  controls.update();
+
+  // Render
+  renderer.render(scene, camera);
+
+  // Call tick again on the next frame
+  window.requestAnimationFrame(tick);
 }
 
-tick()
+tick();
+
+
+
+function createGhost() {
+    // Group for each ghost
+    const ghostGroup = new THREE.Group()
+
+    // Body
+    const bodyGeometry = new THREE.ConeGeometry(0.2, 0.6, 4)
+    const bodyMaterial = new THREE.MeshBasicMaterial({
+        color: '#ffffff',
+        transparent: true,
+        opacity: 0.5
+    })
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+    body.position.y = 0.25
+    ghostGroup.add(body)
+
+    // Head
+    const headGeometry = new THREE.SphereGeometry(0.2, 32, 32)
+    const headMaterial = new THREE.MeshBasicMaterial({
+        color: '#ffffff',
+        transparent: true,
+        opacity: 0.5
+    })
+    const head = new THREE.Mesh(headGeometry, headMaterial)
+    head.position.y = 0.6
+    ghostGroup.add(head)
+
+    return ghostGroup
+}

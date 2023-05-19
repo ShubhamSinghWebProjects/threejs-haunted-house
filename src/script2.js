@@ -13,6 +13,8 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+// FOG
 scene.fog = new THREE.FogExp2(0x081825, 0.1);  // adding a dense fog for a spooky effect
 
 /**
@@ -20,9 +22,39 @@ scene.fog = new THREE.FogExp2(0x081825, 0.1);  // adding a dense fog for a spook
  */
 const textureLoader = new THREE.TextureLoader()
 
-// Load a wood texture for the house walls and door, and a stone texture for graves
-const woodTexture = textureLoader.load('/textures/door/color.jpg')
-const stoneTexture = textureLoader.load('/textures/briks/color.jpg')
+const doorColorTexture = textureLoader.load('/textures/door/color.jpg')
+const doorAlphaTexture = textureLoader.load('/textures/door/alpha.jpg')
+const doorAmbientOcclusionTexture = textureLoader.load('/textures/door/ambientOcclusion.jpg')
+const doorHeightTexture = textureLoader.load('/textures/door/height.jpg')
+const doorNormalTexture = textureLoader.load('/textures/door/normal.jpg')
+const doorMetalnessTexture = textureLoader.load('/textures/door/metalness.jpg')
+const doorRoughnessTexture = textureLoader.load('/textures/door/roughness.jpg')
+
+const bricksColorTexture = textureLoader.load('/textures/bricks/color.jpg')
+const bricksAmbientOcclusionTexture = textureLoader.load('/textures/bricks/ambientOcclusion.jpg')
+const bricksNormalTexture = textureLoader.load('/textures/bricks/normal.jpg')
+const bricksRoughnessTexture = textureLoader.load('/textures/bricks/roughness.jpg')
+
+const grassColorTexture = textureLoader.load('/textures/grass/color.jpg')
+const grassAmbientOcclusionTexture = textureLoader.load('/textures/grass/ambientOcclusion.jpg')
+const grassNormalTexture = textureLoader.load('/textures/grass/normal.jpg')
+const grassRoughnessTexture = textureLoader.load('/textures/grass/roughness.jpg')
+
+grassColorTexture.repeat.set(8, 8)
+grassAmbientOcclusionTexture.repeat.set(8, 8)
+grassNormalTexture.repeat.set(8, 8)
+grassRoughnessTexture.repeat.set(8, 8)
+
+grassColorTexture.wrapS = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapS = THREE.RepeatWrapping
+grassNormalTexture.wrapS = THREE.RepeatWrapping
+grassRoughnessTexture.wrapS = THREE.RepeatWrapping
+
+grassColorTexture.wrapT = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping
+grassNormalTexture.wrapT = THREE.RepeatWrapping
+grassRoughnessTexture.wrapT = THREE.RepeatWrapping
+
 
 /**
  * House
@@ -32,16 +64,24 @@ const stoneTexture = textureLoader.load('/textures/briks/color.jpg')
 const houseGroup = new THREE.Group()
 scene.add(houseGroup)
 
-// Walls
 
+// Walls
 const walls = new THREE.Mesh(
     new THREE.BoxGeometry(4, 2.5, 4),
-    new THREE.MeshStandardMaterial({ 
-        map: woodTexture, // apply wood texture
-        color: '#ac8e82' 
-    })
+    new THREE.MeshStandardMaterial({
+        map: bricksColorTexture,
+        aoMap: bricksAmbientOcclusionTexture,
+        normalMap: bricksNormalTexture,
+        roughnessMap: bricksRoughnessTexture
+     })
 )
+
+walls.geometry.setAttribute('uv2', new THREE.Float32BufferAttribute(walls.geometry.attributes.uv.array, 2))
+
 walls.position.y = 2.5*0.5
+
+// walls.castShadow = true
+// walls.receiveShadow = true
 houseGroup.add(walls)
 
 // Roof
@@ -52,6 +92,8 @@ const roof = new THREE.Mesh(
 
 roof.position.y = 2.5 + 0.5
 roof.rotation.y = Math.PI * 0.25
+// roof.castShadow = true
+// roof.receiveShadow = true
 houseGroup.add(roof)
 
 
@@ -59,17 +101,29 @@ houseGroup.add(roof)
 const door = new THREE.Mesh(
     new THREE.PlaneGeometry(2, 2),
     new THREE.MeshStandardMaterial({ 
-        map: woodTexture, // apply wood texture
-        color: '#aa7b7b' 
-    })
+        map: doorColorTexture,
+        alphaMap: doorAlphaTexture,
+        transparent: true,
+        aoMap: doorAmbientOcclusionTexture,
+        displacementMap: doorHeightTexture,
+        displacementScale: 0.1,
+        normalMap: doorNormalTexture,
+        metalnessMap: doorMetalnessTexture,
+        roughnessMap: doorRoughnessTexture
+     })
 )
+door.geometry.setAttribute('uv2', new THREE.Float32BufferAttribute(door.geometry.attributes.uv.array, 2))
 door.position.y = 1
-door.position.z = 2 + 0.01
+door.position.z = 2 + 0.01 // 0.01 to avoid z-fighting
+// door.castShadow = true
+// door.receiveShadow = true
 houseGroup.add(door)
 
 // Bushes
 const bushGeometry = new THREE.SphereGeometry(1, 16, 16)
-const bushMaterial = new THREE.MeshStandardMaterial({ color: '#89c854' })
+const bushMaterial = new THREE.MeshStandardMaterial({ 
+    color: '#89c854',
+})
 
 const bush1 = new THREE.Mesh(bushGeometry, bushMaterial)
 bush1.scale.set(0.5, 0.5, 0.5)
@@ -102,10 +156,7 @@ const graves = new THREE.Group()
 scene.add(graves)
 
 const graveGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.2)
-const graveMaterial = new THREE.MeshStandardMaterial({ 
-    map: stoneTexture, // apply stone texture
-    color: '#b2b6b1' 
-})
+const graveMaterial = new THREE.MeshStandardMaterial({ color: '#b2b6b1' })
 
 for(let i = 0; i < 50; i++)
 {
@@ -123,6 +174,8 @@ for(let i = 0; i < 50; i++)
     // Rotation
     grave.rotation.z = (Math.random() - 0.5) * 0.4
 
+    graves.castShadow = true
+
     // Add to the graves group
     graves.add(grave)
 }
@@ -130,8 +183,16 @@ for(let i = 0; i < 50; i++)
 // Floor
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(20, 20),
-    new THREE.MeshStandardMaterial({ color: '#a9c388' })
+    new THREE.MeshStandardMaterial({ 
+        map: grassColorTexture,
+        aoMap: grassAmbientOcclusionTexture,
+        normalMap: grassNormalTexture,
+        roughnessMap: grassRoughnessTexture
+    })
 )
+
+floor.geometry.setAttribute('uv2', new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2))
+
 floor.rotation.x = - Math.PI * 0.5
 floor.position.y = 0
 scene.add(floor)
@@ -152,6 +213,22 @@ gui.add(moonLight.position, 'x').min(- 5).max(5).step(0.001)
 gui.add(moonLight.position, 'y').min(- 5).max(5).step(0.001)
 gui.add(moonLight.position, 'z').min(- 5).max(5).step(0.001)
 scene.add(moonLight)
+
+
+// Door light
+const doorLight = new THREE.PointLight('#ff7d46', 1, 7)
+doorLight.position.set(0, 2.2, 2.7)
+houseGroup.add(doorLight)
+
+// Ghosts
+const ghost1 = new THREE.PointLight('#ff00ff', 2, 3)
+scene.add(ghost1)
+
+const ghost2 = new THREE.PointLight('#00ffff', 2, 3)
+scene.add(ghost2)
+
+const ghost3 = new THREE.PointLight('#ffff00', 2, 3)
+scene.add(ghost3)
 
 /**
  * Sizes
@@ -198,12 +275,62 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-renderer.setClearColor(scene.fog.color) // Set the clear color to match the fog color for better depth effect
+renderer.setClearColor('#262837')
+
+/*
+Shadows
+*/
+
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+moonLight.castShadow = true
+doorLight.castShadow = true
+ghost1.castShadow = true
+ghost2.castShadow = true
+ghost3.castShadow = true
+
+walls.castShadow = true
+
+bush1.castShadow = true
+bush2.castShadow = true
+bush3.castShadow = true
+bush4.castShadow = true
+
+floor.receiveShadow = true
+walls.receiveShadow = true
+
+doorLight.shadow.mapSize.width = 256
+doorLight.shadow.mapSize.height = 256
+doorLight.shadow.camera.far = 7
+
+ghost1.shadow.mapSize.width = 256
+ghost1.shadow.mapSize.height = 256
+ghost1.shadow.camera.far = 7
+
+ghost2.shadow.mapSize.width = 256
+ghost2.shadow.mapSize.height = 256
+ghost2.shadow.camera.far = 7
+
+ghost3.shadow.mapSize.width = 256
+ghost3.shadow.mapSize.height = 256
+ghost3.shadow.camera.far = 7
+
 
 /**
  * Animate
  */
 const clock = new THREE.Clock()
+
+function ghostMovement(ghost, elapsedTime)
+{
+    const ghostAngle = elapsedTime * 0.5
+    ghost.position.x = Math.cos(ghostAngle) * 4
+    ghost.position.z = Math.sin(ghostAngle) * 4
+    ghost.position.y = Math.sin(elapsedTime * 3)
+
+    ghost.rotation.y = Math.sin(elapsedTime * 4)
+}
 
 const tick = () =>
 {
@@ -212,6 +339,10 @@ const tick = () =>
     // Update controls
     controls.update()
 
+    // Update ghosts
+    ghostMovement(ghost1, elapsedTime)
+    ghostMovement(ghost2, elapsedTime + 10)
+    ghostMovement(ghost3, elapsedTime + 20)
     // Render
     renderer.render(scene, camera)
 
