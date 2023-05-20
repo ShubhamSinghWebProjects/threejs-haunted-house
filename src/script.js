@@ -2,8 +2,12 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'lil-gui'
 import gsap from 'gsap'
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
 const BASE_PATH = '/threejs-haunted-house'
+
+
 /**
  * Base
  */
@@ -18,6 +22,95 @@ const scene = new THREE.Scene()
 
 // FOG
 scene.fog = new THREE.FogExp2(0x081825, 0.1);  // adding a dense fog for a spooky effect
+
+/**
+ * 
+ * Setting Up Audio
+ */
+
+const listener = new THREE.AudioListener();
+const sound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
+let font, cube;
+
+audioLoader.load('/sound/haunted_house.mp3', function (buffer) {
+    sound.setBuffer(buffer);
+    sound.setLoop(true);
+    sound.setVolume(0.5);
+});
+
+const fontLoader = new FontLoader();
+fontLoader.load('/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
+    font = loadedFont;
+    cube = createMusicControlCube();
+    scene.add(cube);
+});
+
+function createMusicControlCube() {
+    const cubeGeometry = new THREE.BoxGeometry(2.5, 1, 0.2);
+    const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    const textGeometry = new TextGeometry('Music', {
+        font: font,
+        size: 0.5,
+        height: 0.2,
+        curveSegments: 4,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 2
+    });
+
+    textGeometry.name = 'text';
+    textGeometry.center();
+
+    const textMesh = new THREE.Mesh(textGeometry, new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    textMesh.position.set(0, 0, 0.6);
+    cube.add(textMesh);
+    cube.position.set(0, 5, 0);
+
+    return cube;
+}
+
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+function onMouseClick(event) {
+    event.preventDefault();
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    
+    let clickableObjects = [cube];
+    let intersects = raycaster.intersectObjects(clickableObjects, true);
+
+    if(intersects.length > 0) {
+        const intersectedObject = intersects[0].object;
+
+        if (intersectedObject === cube) {
+            if (sound.isPlaying) {
+                sound.pause();
+                cube.material.color.set(0xffffff);
+                cube.children[0].material.color.set(0x000000); // also change text color
+            } else {
+                if (!sound.buffer) {
+                    console.log('The sound buffer is not loaded yet');
+                    return;
+                }
+                sound.play();
+                cube.material.color.set(0x00ff00);
+                cube.children[0].material.color.set(0xffffff); // also change text color
+            }
+        }
+    }
+}
+
+window.addEventListener('click', onMouseClick, false);
+
+// ------------------------------------------------
 
 /**
  * Textures
