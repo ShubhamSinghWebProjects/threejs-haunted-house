@@ -105,7 +105,7 @@ const sound = new THREE.Audio(listener);
 const audioLoader = new THREE.AudioLoader();
 let font;
 
-audioLoader.load('/sound/haunted_house.mp3', function (buffer) {
+audioLoader.load(`${BASE_PATH}/sound/haunted_house.mp3`, function (buffer) {
     sound.setBuffer(buffer);
     sound.setLoop(true);
     sound.setVolume(0.5);
