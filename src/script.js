@@ -545,14 +545,18 @@ generateTimeline();
  * Animate
  */
 
-function ghostMovement(ghost, elapsedTime, randomXZ = 0, randomY = 0)
+function ghostMovement(ghost, ghostLight, elapsedTime, randomXZ = 0, randomY = 0)
 {
     const ghostAngle = elapsedTime * 0.5
     ghost.position.x = Math.cos(ghostAngle) * 4 + randomXZ
+    ghostLight.position.x = Math.cos(ghostAngle) * 4 + randomXZ
     ghost.position.z = Math.sin(ghostAngle) * 4 + randomXZ
+    ghostLight.position.z = Math.sin(ghostAngle) * 4 + randomXZ
     ghost.position.y = Math.sin(elapsedTime * 3) + randomY
+    ghostLight.position.y = Math.cos(elapsedTime * 3) + randomY
 
     ghost.rotation.y = Math.sin(elapsedTime * 4)
+    ghostLight.rotation.y = Math.sin(elapsedTime * 4)
 }
 
 
@@ -563,13 +567,9 @@ const tick = () => {
 
  
     // Update ghosts
-    ghostMovement(ghost1, elapsedTime)
-    ghostMovement(ghost2, elapsedTime + 10, 1, Math.sin(elapsedTime * 2.5))
-    ghostMovement(ghost3, elapsedTime + 20)
-
-    ghostMovement(ghostL1, elapsedTime + 5)
-    ghostMovement(ghostL2, elapsedTime + 15, 1, Math.sin(elapsedTime * 2.5))
-    ghostMovement(ghostL3, elapsedTime + 25)
+    ghostMovement(ghost1, ghostL1, elapsedTime)
+    ghostMovement(ghost2, ghostL2, elapsedTime + 10, 1, Math.sin(elapsedTime * 2.5))
+    ghostMovement(ghost3, ghostL3, elapsedTime + 20)
     // Render 
   camera.lookAt(scene.position);
 
