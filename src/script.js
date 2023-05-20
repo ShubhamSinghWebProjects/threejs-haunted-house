@@ -325,15 +325,15 @@ houseGroup.add(doorLight)
 
 // Create 3 ghosts
 
-// const ghost1 = new THREE.PointLight('#ff00ff', 2, 3)
+const ghostL1 = new THREE.PointLight('#ff00ff', 2, 3)
 const ghost1 = createGhost()
 scene.add(ghost1)
 
-// const ghost2 = new THREE.PointLight('#00ffff', 2, 3)
+const ghostL2 = new THREE.PointLight('#00ffff', 2, 3)
 const ghost2 = createGhost()
 scene.add(ghost2)
 
-// const ghost3 = new THREE.PointLight('#ffff00', 2, 3)
+const ghostL3 = new THREE.PointLight('#ffff00', 2, 3)
 const ghost3 = createGhost()
 scene.add(ghost3)
 
@@ -414,9 +414,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
 moonLight.castShadow = true
 doorLight.castShadow = true
-ghost1.castShadow = true
-ghost2.castShadow = true
-ghost3.castShadow = true
+ghostL1.castShadow = true
+ghostL2.castShadow = true
+ghostL3.castShadow = true
 
 walls.castShadow = true
 
@@ -432,17 +432,17 @@ doorLight.shadow.mapSize.width = 256
 doorLight.shadow.mapSize.height = 256
 doorLight.shadow.camera.far = 7
 
-// ghost1.shadow.mapSize.width = 256
-// ghost1.shadow.mapSize.height = 256
-// ghost1.shadow.camera.far = 7
+ghostL1.shadow.mapSize.width = 256
+ghostL1.shadow.mapSize.height = 256
+ghostL1.shadow.camera.far = 7
 
-// ghost2.shadow.mapSize.width = 256
-// ghost2.shadow.mapSize.height = 256
-// ghost2.shadow.camera.far = 7
+ghostL2.shadow.mapSize.width = 256
+ghostL2.shadow.mapSize.height = 256
+ghostL2.shadow.camera.far = 7
 
-// ghost3.shadow.mapSize.width = 256
-// ghost3.shadow.mapSize.height = 256
-// ghost3.shadow.camera.far = 7
+ghostL3.shadow.mapSize.width = 256
+ghostL3.shadow.mapSize.height = 256
+ghostL3.shadow.camera.far = 7
 
 
 /**
@@ -566,6 +566,10 @@ const tick = () => {
     ghostMovement(ghost1, elapsedTime)
     ghostMovement(ghost2, elapsedTime + 10, 1, Math.sin(elapsedTime * 2.5))
     ghostMovement(ghost3, elapsedTime + 20)
+
+    ghostMovement(ghostL1, elapsedTime + 5)
+    ghostMovement(ghostL2, elapsedTime + 15, 1, Math.sin(elapsedTime * 2.5))
+    ghostMovement(ghostL3, elapsedTime + 25)
     // Render 
   camera.lookAt(scene.position);
 
