@@ -13,7 +13,7 @@ const BASE_PATH = '/threejs-haunted-house'
  */
 // Debug
 const gui = new dat.GUI()
-
+gui.show( false ); // hide
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
