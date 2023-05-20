@@ -112,7 +112,7 @@ audioLoader.load(`${BASE_PATH}/sound/haunted_house.mp3`, function (buffer) {
 });
 
 const fontLoader = new FontLoader();
-fontLoader.load('/fonts/helvetiker_regular.typeface.json', (font) => {
+fontLoader.load(`${BASE_PATH}/fonts/helvetiker_regular.typeface.json`, (font) => {
     const textGeometry = new TextGeometry('Music', {
         font: font,
         size: 0.2,
