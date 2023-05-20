@@ -327,15 +327,15 @@ houseGroup.add(doorLight)
 
 const ghostL1 = new THREE.PointLight('#ff00ff', 2, 3)
 const ghost1 = createGhost()
-scene.add(ghost1)
+scene.add(ghost1, ghostL1)
 
 const ghostL2 = new THREE.PointLight('#00ffff', 2, 3)
 const ghost2 = createGhost()
-scene.add(ghost2)
+scene.add(ghost2, ghostL2)
 
 const ghostL3 = new THREE.PointLight('#ffff00', 2, 3)
 const ghost3 = createGhost()
-scene.add(ghost3)
+scene.add(ghost3, ghostL3)
 
 
 
